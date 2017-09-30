@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	
+	<canvas id="canvas"></canvas>
+
+	<script>
+		
+		window.onload = function()
+		{
+
+			var mx = 0;
+			var my = 0;
+			var ws;
+			var food = {};
+			var map = {};
+			var players = {};
+			var myplayer;
+			var camX;
+			var camY;
+			var myplayer;
+			var zoom = 2;
+
+			function connect()
+			{
+				ws = new WebSocket("ws://127.0.0.1:443");
+				ws.onopen = onopen;
+				ws.onmessage = onmessage;
+				ws.onerror = onclose;
+				ws.onclose = onclose;
+			}
+
+			function onopen()
+			{
+
+			}
+
+			function onmessage(evt)
+			{
+				try{var m = JSON.parse(evt.data);} catch(e){return;};
+				switch(m['type'])
+				{
+					case 'players':
+						players = m['data'];
+						myplayer = players[m['myid']];
+						break;
+					case 'map':
+						map = m['data'];
+						break;
+				}
+			}
+
+			function onclose(e)
+			{
+				if(e)
+				{
+					console.log(e);
+				}
+				connect();
+			}
+
+			function draw()
+			{
+				if(!myplayer){return;}
+				
+				var ctx = canvas.getContext("2d");
+				
+				camX = -myplayer.x + canvas.width / 2;
+				camY = -myplayer.y + canvas.height / 2;
+				
+				ctx.translate(camX,camY);
+				ctx.scale(zoom,zoom);
+
+				for(var k in players)
+				{
+					var p = players[k];
+					ctx.beginPath();
+					ctx.arc(p.x,p.y,p.s,0,Math.PI*2);
+					ctx.fill();
+				}
+			}
+
+			function tick()
+			{
+				canvas.width = document.documentElement.clientWidth;
+				canvas.height = document.documentElement.clientHeight;
+				draw();
+				requestAnimationFrame(tick);
+			}
+
+			tick();
+			connect();
+			window.addEventListener = function(e)
+			{
+				mx = e.clientX;
+				my = e.clientY;
+			}
+
+		}
+		
+	</script>
+
+	<style>
+		body
+		{
+			margin: 0;
+		}
+		#canvas
+		{
+			width: 100%;
+			height: 100%;
+		}
+	</style>
+
+</body>
+</html>
